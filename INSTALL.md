@@ -50,7 +50,7 @@ docker compose version
 
 ## 2. Clone the repository
 ```
-git clone https://github.com/cekundu/securefiles.git
+git clone https://github.com/cekundu/securefilesICS0022.git
 cd securefiles
 ```
 
@@ -92,12 +92,10 @@ nc -z localhost 5433
 ```
 ## 5. Build the application JAR
 ```
+chmod +x gradlew
 ./gradlew clean bootJar
 ```
-If you see a "permission denied" error, fix the script permissions:
-```
-chmod +x gradlew
-```
+
 The compiled CLI JAR will appear at:
 ```
 build/libs/securefiles-0.0.1-SNAPSHOT.jar
