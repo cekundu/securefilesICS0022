@@ -1,0 +1,14 @@
+databaseChangeLog:
+  - changeSet:
+      id: 03
+      author: valerija
+      changes:
+        - addColumn:
+            tableName: users
+            columns:
+              - column:
+                  name: is_admin
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false

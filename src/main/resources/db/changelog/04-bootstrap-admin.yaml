@@ -1,0 +1,21 @@
+databaseChangeLog:
+  - changeSet:
+      id: bootstrap-admin
+      author: you
+      runOnChange: true   # optional, helpful during development
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: username
+                  value: "admin"
+              - column:
+                  name: is_admin
+                  valueBoolean: true
+              - column:
+                  name: pbkdf2_salt
+                  value: "rzo7qASDqgBGGf/7xjNLkQ=="
+              - column:
+                  name: password_hash
+                  value: "pLAyrsL7JCUef5kDipdu/ijTyt6wnXQXIUEPpwLmvUU="

@@ -1,0 +1,9 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/01-create-users.yaml
+  - include:
+      file: db/changelog/02-create-files.yaml
+  - include:
+      file: db/changelog/03-add-admin-flag.yaml
+  - include:
+      file: db/changelog/04-bootstrap-admin.yaml

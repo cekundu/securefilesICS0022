@@ -1,0 +1,64 @@
+databaseChangeLog:
+  - changeSet:
+      id: 02
+      author: valerija
+      changes:
+        - createTable:
+            tableName: files
+            columns:
+              - column:
+                  name: id
+                  type: BIGSERIAL
+                  constraints:
+                    primaryKey: true
+
+              - column:
+                  name: owner_id
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: original_name
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: storage_filename
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: size
+                  type: BIGINT
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: uploaded_at
+                  type: TIMESTAMP
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+
+              - column:
+                  name: integrity_hmac
+                  type: VARCHAR(128)
+                  constraints:
+                    nullable: false
+
+        - addForeignKeyConstraint:
+            baseTableName: files
+            baseColumnNames: owner_id
+            constraintName: fk_files_owner
+            referencedTableName: users
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+        - addUniqueConstraint:
+            tableName: files
+            columnNames: owner_id, original_name
+            constraintName: uq_owner_original_name
+
