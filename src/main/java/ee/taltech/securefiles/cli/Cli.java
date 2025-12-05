@@ -414,15 +414,24 @@ public class Cli implements CommandLineRunner {
                 return;
             }
             try {
-                target = Path.of(out);
-                validator.validateOutputPath(target);
+                validator.validateOutputPath(Path.of(out));
+
+                // boundary enforcement belongs HERE, not in validator
+                Path base = fileService.getUserDir(session).toAbsolutePath().normalize();
+                Path resolved = base.resolve(out).normalize();
+
+                if (!resolved.startsWith(base)) {
+                    System.out.println("Error: Output path escapes your storage directory.");
+                    continue;
+                }
+                target = resolved;
             } catch (Exception e) {
                 System.out.println("Error: " + e.getMessage());
                 continue;
             }
 
             System.out.println("You entered: " + target);
-            System.out.print("Press Enter to confirm, or type anything to re-enter: ");
+            System.out.print("Press Enter to confirm, or type new path: ");
             String confirm = scannerSingleton.nextLine().trim();
 
             if (confirm.isEmpty()) {
