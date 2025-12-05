@@ -422,7 +422,7 @@ public class Cli implements CommandLineRunner {
             }
 
             System.out.println("You entered: " + target);
-            System.out.print("Press Enter to confirm, or type new path: ");
+            System.out.print("Press Enter to confirm, or type anything to re-enter: ");
             String confirm = scannerSingleton.nextLine().trim();
 
             if (confirm.isEmpty()) {
