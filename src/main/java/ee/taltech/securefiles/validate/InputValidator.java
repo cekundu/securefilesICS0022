@@ -70,7 +70,12 @@ public class InputValidator {
             throw new IllegalArgumentException("Output path must include a parent directory.");
         }
 
-        
+        // safe traversal check
+        for (Path part : norm) {
+            if (part.toString().equals("..")) {
+                throw new IllegalArgumentException("Output path cannot escape directories.");
+            }
+        }
     }
 
     public void validatePassword(char[] password) {

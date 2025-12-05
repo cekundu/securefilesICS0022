@@ -116,21 +116,15 @@ public class FileService {
     // ------------------------------ decryption ------------------------------
 
     public void decryptTo(Session session, String originalName, Path outputPath) throws IOException {
-
         validator.validateAlias(originalName);
-        FileRecord record = findOwnedRecordOrThrow(session, originalName);
-
-        // structural validation only
         validator.validateOutputPath(outputPath);
 
-        // compute safe output path (filename only)
-        Path userDir = getUserDir(session).toAbsolutePath().normalize();
-        Path safeOutput = userDir.resolve(outputPath.getFileName().toString()).normalize();
+        // Prevent attackers from forcing dumps into the user storage directory.
+        ensureNotInsideRoot(outputPath);
 
-        // enforce boundary
-        ensureUnderDirectory(safeOutput, userDir);
+        FileRecord record = findOwnedRecordOrThrow(session, originalName);
 
-        // locate encrypted source file
+        Path userDir = getUserDir(session);
         Path sourcePath = userDir.resolve(record.getStorageFilename()).normalize();
         ensureUnderDirectory(sourcePath, userDir);
 
@@ -140,13 +134,16 @@ public class FileService {
 
         byte[] ciphertext = Files.readAllBytes(sourcePath);
 
-        // integrity check
+        // Integrity check via stored HMAC
         String stored = record.getIntegrityHmac();
         if (stored == null || stored.isBlank()) {
+            // this case should never happen unless DB corruption occurs;
+            // disallow decryption if missing.
             throw new SecurityException("Missing integrity data; cannot decrypt.");
         }
 
         String recalculated = computeHmac(ciphertext, session.encryptionKey());
+
         if (!MessageDigest.isEqual(
                 Base64.getDecoder().decode(stored),
                 Base64.getDecoder().decode(recalculated)
@@ -154,25 +151,21 @@ public class FileService {
             throw new SecurityException("Integrity check failed.");
         }
 
-        // decrypt
+        // Decrypt only after integrity success
         byte[] plaintext = cryptoService.decrypt(ciphertext, session.encryptionKey());
 
-        Path parentDir = safeOutput.getParent();
+        Path parentDir = outputPath.toAbsolutePath().normalize().getParent();
         if (parentDir != null) {
             Files.createDirectories(parentDir);
         }
 
-        logger.log("decrypt", session.userId(),
-                "alias=" + originalName +
-                        " storage=" + record.getStorageFilename() +
-                        " size_bytes=" + record.getSize());
+        logger.log("decrypt", session.userId(), "alias=" + originalName + " storage=" + originalName + " size_bytes=" + record.getSize());
 
-        Files.write(safeOutput, plaintext,
+        Files.write(outputPath, plaintext,
                 StandardOpenOption.CREATE,
                 StandardOpenOption.TRUNCATE_EXISTING,
                 StandardOpenOption.WRITE);
-
-        applyStrictPermissions(safeOutput);
+        applyStrictPermissions(outputPath);
     }
 
     // ------------------------------ DELETE ------------------------------
@@ -303,7 +296,7 @@ public class FileService {
                 .orElseThrow(() -> new IllegalArgumentException("Alias not found."));
     }
 
-    public Path getUserDir(Session session) {
+    private Path getUserDir(Session session) {
         return rootDir.resolve(String.valueOf(session.userId())).normalize();
     }
 
@@ -342,6 +335,15 @@ public class FileService {
             // expected on Windows
         } catch (IOException e) {
             throw new IllegalStateException("Failed to set secure permissions.");
+        }
+    }
+
+    private void ensureNotInsideRoot(Path out) {
+        Path normOut = out.toAbsolutePath().normalize();
+        Path normRoot = rootDir.toAbsolutePath().normalize();
+
+        if (normOut.startsWith(normRoot)) {
+            throw new SecurityException("Output path cannot be inside securefiles storage.");
         }
     }
 
