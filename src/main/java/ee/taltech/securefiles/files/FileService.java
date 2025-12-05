@@ -303,7 +303,7 @@ public class FileService {
                 .orElseThrow(() -> new IllegalArgumentException("Alias not found."));
     }
 
-    private Path getUserDir(Session session) {
+    public Path getUserDir(Session session) {
         return rootDir.resolve(String.valueOf(session.userId())).normalize();
     }
 
